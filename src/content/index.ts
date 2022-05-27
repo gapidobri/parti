@@ -8,16 +8,17 @@ let remoteAction = false;
 async function main() {
   Socket.init();
   Socket.addReportCallback(handleReport);
+  Socket.addSyncCallback(handleSync);
 
   player = await locatePlayer();
 
   player.addEventListener('play', handlePlay);
   player.addEventListener('pause', handlePause);
   player.addEventListener('timeupdate', handleTimeUpdate);
+  player.addEventListener('seeked', handleSeek);
 }
 
 function report() {
-  console.log('Reporting...');
   Socket.report({ playing: !player.paused, time: player.currentTime });
 }
 
@@ -49,15 +50,26 @@ function handleTimeUpdate() {
   }
 }
 
+function handleSeek() {
+  console.debug('Seeking');
+
+  if (remoteAction) {
+    remoteAction = false;
+    return;
+  }
+  report();
+}
+
 function handleReport(newState: State) {
-  console.debug(
-    'ℹ️ New report: playing:',
-    newState.playing,
-    'time:',
-    newState.time,
-  );
+  // console.debug(
+  //   'ℹ️ New report: playing:',
+  //   newState.playing,
+  //   'time:',
+  //   newState.time,
+  // );
 
   if (player.currentTime !== newState.time) {
+    remoteAction = true;
     player.currentTime = newState.time;
   }
 
@@ -69,6 +81,10 @@ function handleReport(newState: State) {
       player.pause();
     }
   }
+}
+
+function handleSync() {
+  Socket.sync({ playing: !player.paused, time: player.currentTime });
 }
 
 main();

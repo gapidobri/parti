@@ -1,7 +1,10 @@
-<script>
-  import Counter from "./Counter.svelte";
+<script lang="ts">
 </script>
 
-<main class="p-2">
-  <Counter />
-</main>
+<main>Hello</main>
+
+<style>
+  main {
+    padding: 8px;
+  }
+</style>

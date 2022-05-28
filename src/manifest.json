@@ -1,7 +1,8 @@
 {
   "name": "Parti",
   "background": {
-    "scripts": ["background/index.ts"]
+    "scripts": ["background/index.ts"],
+    "persistent": true
   },
   "content_scripts": [
     {

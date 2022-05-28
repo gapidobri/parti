@@ -1,29 +1,30 @@
-import type { State } from './interfaces';
+import type { State } from '../interfaces';
 import { locatePlayer } from './player-locator';
-import Socket from './socket';
+
+import browser from 'webextension-polyfill';
 
 let player: HTMLVideoElement;
 let remoteAction = false;
+let port: browser.Runtime.Port;
 
 async function main() {
-  Socket.init();
-  Socket.addReportCallback(handleReport);
-  Socket.addSyncCallback(handleSync);
+  const portId = Math.round(Math.random() * 100000);
+
+  port = browser.runtime.connect({ name: `state:${portId}` });
+  port.onMessage.addListener(handleReport);
 
   player = await locatePlayer();
-
   player.addEventListener('play', handlePlay);
   player.addEventListener('pause', handlePause);
-  player.addEventListener('timeupdate', handleTimeUpdate);
   player.addEventListener('seeked', handleSeek);
 }
 
 function report() {
-  Socket.report({ playing: !player.paused, time: player.currentTime });
+  port.postMessage({ playing: !player.paused, time: player.currentTime });
 }
 
 function handlePlay() {
-  console.debug('Playing');
+  console.debug('▶️ Playing');
 
   if (remoteAction) {
     remoteAction = false;
@@ -34,7 +35,7 @@ function handlePlay() {
 }
 
 function handlePause() {
-  console.debug('Paused');
+  console.debug('⏸ Paused');
 
   if (remoteAction) {
     remoteAction = false;
@@ -44,14 +45,8 @@ function handlePause() {
   report();
 }
 
-function handleTimeUpdate() {
-  if (player.paused) {
-    report();
-  }
-}
-
 function handleSeek() {
-  console.debug('Seeking');
+  console.debug('⏩ Seeking');
 
   if (remoteAction) {
     remoteAction = false;
@@ -83,9 +78,7 @@ function handleReport(newState: State) {
   }
 }
 
-function handleSync() {
-  Socket.sync({ playing: !player.paused, time: player.currentTime });
-}
+function handleSync() {}
 
 main();
 

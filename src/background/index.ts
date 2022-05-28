@@ -18,6 +18,11 @@ function handleConnect(port: browser.Runtime.Port) {
   }
 }
 
+/**
+ * Registers listeners for this port
+ * @param port Connecter browser port
+ * @param id Port id
+ */
 function handleStateReports(port: browser.Runtime.Port, id: string) {
   console.info('✅ State reports port connected', id);
   ports[id] = port;
@@ -29,6 +34,11 @@ function handleStateReports(port: browser.Runtime.Port, id: string) {
   port.onDisconnect.addListener((port) => handleDisconnect(port, id));
 }
 
+/**
+ * Broadcasts state to all content script instances
+ * @param state Current state
+ * @param id Port id
+ */
 function broadcastState(state: State, id: string) {
   for (const portId in ports) {
     if (portId === id) continue;

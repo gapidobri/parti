@@ -30,6 +30,10 @@ function handlePing(start: number) {
   socket.emit('ping', start);
 }
 
+/**
+ * Reports state to server
+ * @param state Current state
+ */
 export function reportState(state: State) {
   console.debug('Report state', state);
   socket.emit('state', state);

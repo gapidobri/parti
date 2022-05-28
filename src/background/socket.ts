@@ -1,13 +1,22 @@
 import { io, Socket } from 'socket.io-client';
+import { storage } from 'webextension-polyfill';
 import type { State } from '../interfaces';
-
-const url = 'ws://127.0.0.1:3000';
 
 let socket: Socket;
 let handleState: (state: State) => void = () => {};
 
-export function initSocket() {
+export async function initSocket() {
+  if (socket && socket.connected) {
+    socket.disconnect();
+  }
+
   console.info('⚡️ Initializing WebSocket connection');
+
+  const url =
+    (await storage.local.get('serverUrl'))['serverUrl'] ??
+    'ws://127.0.0.1:3000';
+
+  console.debug(url);
 
   socket = io(url);
 

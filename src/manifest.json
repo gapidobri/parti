@@ -13,5 +13,5 @@
   "browser_action": {
     "default_popup": "popup/index.html"
   },
-  "permissions": ["webRequest", "<all_urls>"]
+  "permissions": ["webRequest", "storage", "<all_urls>"]
 }

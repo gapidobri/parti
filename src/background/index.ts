@@ -1,20 +1,22 @@
-import browser from 'webextension-polyfill';
+import { runtime, Runtime } from 'webextension-polyfill';
 import type { State } from '../interfaces';
 import { initSocket, reportState, setReportStateCallback } from './socket';
 
 console.info('✅ Background script running');
 
-const ports: Record<string, browser.Runtime.Port> = {};
+const ports: Record<string, Runtime.Port> = {};
 
 initSocket();
 
-browser.runtime.onConnect.addListener(handleConnect);
+runtime.onConnect.addListener(handleConnect);
+runtime.onMessage.addListener(handleMessage);
 
-function handleConnect(port: browser.Runtime.Port) {
+function handleConnect(port: Runtime.Port) {
   const [name, id] = port.name.split(':');
   switch (name) {
     case 'state':
       handleStateReports(port, id);
+      break;
   }
 }
 
@@ -23,7 +25,7 @@ function handleConnect(port: browser.Runtime.Port) {
  * @param port Connecter browser port
  * @param id Port id
  */
-function handleStateReports(port: browser.Runtime.Port, id: string) {
+function handleStateReports(port: Runtime.Port, id: string) {
   console.info('✅ State reports port connected', id);
   ports[id] = port;
 
@@ -46,9 +48,15 @@ function broadcastState(state: State, id: string) {
   }
 }
 
-function handleDisconnect(port: browser.Runtime.Port, id: string) {
+function handleDisconnect(port: Runtime.Port, id: string) {
   console.info('❌ State reports port disconnected', id);
   delete ports[id];
+}
+
+function handleMessage(data) {
+  if (data === 'reloadSettings') {
+    initSocket();
+  }
 }
 
 export {};

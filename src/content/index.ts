@@ -10,11 +10,11 @@ let player: VideoPlayer;
 const portId = Math.round(Math.random() * 100000);
 
 async function main() {
+  player = await VideoPlayer.init();
+  player.addReportListener(report);
+
   connectPort();
   setInterval(connectPort, 1000);
-
-  player = new VideoPlayer();
-  player.addReportListener(report);
 }
 
 function connectPort() {

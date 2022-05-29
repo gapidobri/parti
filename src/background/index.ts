@@ -3,6 +3,7 @@ import type { PlaybackState } from '../interfaces';
 import { initSocket, reportState, setReportStateCallback } from './socket';
 
 const ports: Record<string, Runtime.Port> = {};
+let playbackState: PlaybackState;
 
 initSocket();
 
@@ -31,6 +32,10 @@ function handleStateReports(port: Runtime.Port, id: string) {
   port.onMessage.addListener((state) => broadcastState(state, id));
   setReportStateCallback(port.postMessage);
   port.onDisconnect.addListener((port) => handleDisconnect(port, id));
+
+  if (playbackState) {
+    port.postMessage(playbackState);
+  }
 }
 
 /**
@@ -39,7 +44,9 @@ function handleStateReports(port: Runtime.Port, id: string) {
  * @param id Port id
  */
 function broadcastState(state: PlaybackState, id: string) {
-  console.debug(state);
+  console.log(state);
+  playbackState = state;
+
   for (const portId in ports) {
     if (portId === id) continue;
     ports[portId].postMessage(state);

@@ -7,11 +7,13 @@ export default class VideoPlayer {
   private state: PlaybackState = { state: 'pause' };
   private reportCallbacks: Array<(state: PlaybackState) => void> = [];
 
-  constructor() {
-    this.init();
+  public static async init() {
+    const instance = new VideoPlayer();
+    await instance.initVideo();
+    return instance;
   }
 
-  private async init() {
+  private async initVideo() {
     this.videoElement = await this.locateVideoElement();
 
     this.videoElement.addEventListener('play', this.onPlay.bind(this));
@@ -25,13 +27,16 @@ export default class VideoPlayer {
     this.applyState();
   }
 
-  private applyState() {
+  private async applyState() {
     const prevTime = this.videoElement.currentTime;
 
     switch (this.state.state) {
       case 'play':
         this.videoElement.currentTime = (Date.now() + this.state.offset) / 1000;
-        this.videoElement.play();
+        this.videoElement.play().catch(() => {
+          this.videoElement.muted = true;
+          this.videoElement.play();
+        });
         break;
 
       case 'pause':

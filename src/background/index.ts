@@ -9,8 +9,7 @@ import {
 
 let ports: Runtime.Port[] = [];
 const rooms: Record<string, Runtime.Port[]> = {};
-
-let playbackState: PlaybackState;
+const states: Record<string, PlaybackState> = {};
 
 initSocket();
 
@@ -18,10 +17,9 @@ runtime.onConnect.addListener(handleConnect);
 runtime.onMessage.addListener(handleMessage);
 
 function handleConnect(port: Runtime.Port) {
-  const [name, id] = port.name.split(':');
-  switch (name) {
+  switch (port.name) {
     case 'state':
-      handleStateReports(port, id);
+      handleStateReports(port);
       break;
   }
 }
@@ -29,20 +27,15 @@ function handleConnect(port: Runtime.Port) {
 /**
  * Registers listeners for this port
  * @param port Connecter browser port
- * @param id Port id
  */
-function handleStateReports(port: Runtime.Port, id: string) {
-  console.info('✅ Player connected', id);
+function handleStateReports(port: Runtime.Port) {
+  console.info('✅ Player connected');
   ports.push(port);
 
   port.onMessage.addListener(reportState);
   port.onMessage.addListener(broadcastState);
   setReportStateCallback(port.postMessage);
   port.onDisconnect.addListener(handleDisconnect);
-
-  if (playbackState) {
-    port.postMessage(playbackState);
-  }
 }
 
 /**
@@ -53,15 +46,9 @@ function handleStateReports(port: Runtime.Port, id: string) {
 function broadcastState(state: PlaybackState, port: Runtime.Port) {
   console.log(state);
 
-  playbackState = state;
-
-  // for (let p of ports) {
-  //   if (p === port) continue;
-  //   p.postMessage(state);
-  // }
-
   for (const room in rooms) {
     if (!rooms[room].includes(port)) continue;
+    states[room] = state;
     for (const p of rooms[room]) {
       if (p === port) continue;
       p.postMessage(state);
@@ -86,10 +73,17 @@ async function handleMessage(event: PortEvent) {
       break;
 
     case 'joinroom':
+      // TODO: Get playback state from player on join
+
       if (!rooms[event.data.name]) {
         rooms[event.data.name] = [];
       }
       rooms[event.data.name].push(port);
+
+      if (states[event.data.name]) {
+        port.postMessage(states[event.data.name]);
+      }
+
       break;
 
     case 'leaveroom':

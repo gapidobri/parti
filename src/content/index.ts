@@ -18,11 +18,7 @@ async function main() {
 async function connectPort() {
   if (portConnected) return;
 
-  // const [tab] = await tabs.query({ active: true, currentWindow: true });
-
-  const portId = Math.random().toString(36).slice(2, 7);
-
-  port = browser.runtime.connect({ name: `state:${portId}` });
+  port = browser.runtime.connect({ name: 'state' });
   port.onMessage.addListener(handleMessage);
   port.onDisconnect.addListener(handleDisconnect);
   portConnected = true;

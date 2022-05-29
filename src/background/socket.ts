@@ -1,9 +1,9 @@
 import { io, Socket } from 'socket.io-client';
 import { storage } from 'webextension-polyfill';
-import type { State } from '../interfaces';
+import type { PlaybackState, PortEvent } from '../interfaces';
 
 let socket: Socket;
-let handleState: (state: State) => void = () => {};
+let handleState: (state: PlaybackState) => void = () => {};
 
 export async function initSocket() {
   if (socket && socket.connected) {
@@ -15,8 +15,6 @@ export async function initSocket() {
   const url =
     (await storage.local.get('serverUrl'))['serverUrl'] ??
     'ws://127.0.0.1:3000';
-
-  console.debug(url);
 
   socket = io(url);
 
@@ -42,10 +40,16 @@ function handlePing(start: number) {
  * Reports state to server
  * @param state Current state
  */
-export function reportState(state: State) {
+export function reportState(state: PlaybackState) {
   socket.emit('state', state);
 }
 
-export function setReportStateCallback(callback: (state: State) => void) {
+export function emit(event: PortEvent) {
+  socket.emit(event.name, event.data);
+}
+
+export function setReportStateCallback(
+  callback: (state: PlaybackState) => void,
+) {
   handleState = callback;
 }

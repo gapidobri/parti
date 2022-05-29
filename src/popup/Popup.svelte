@@ -9,8 +9,24 @@
 
   function handleSave() {
     storage.local.set({ serverUrl: serverUrl });
-    runtime.sendMessage('reloadSettings');
+    runtime.sendMessage({ name: 'reloadsettings', data: null });
     window.close();
+  }
+
+  let room: string = '';
+
+  async function handleJoinRoom() {
+    runtime.sendMessage({
+      name: 'joinroom',
+      data: { name: room },
+    });
+  }
+
+  async function handleLeaveRoom() {
+    runtime.sendMessage({
+      name: 'leaveroom',
+      data: { name: room },
+    });
   }
 </script>
 
@@ -24,6 +40,13 @@
     </label>
 
     <button id="save" on:click={handleSave}>Save</button>
+
+    <label for="room">
+      Room
+      <input id="room" type="text" bind:value={room} />
+    </label>
+    <button on:click={handleJoinRoom}>Join room</button>
+    <button on:click={handleLeaveRoom}>Leave room</button>
   </settings>
 </main>
 
@@ -41,9 +64,12 @@
 
   settings {
     margin-top: 16px;
+
+    display: flex;
+    flex-direction: column;
   }
 
-  #url {
+  input {
     margin-left: 8px;
     padding-left: 8px;
 

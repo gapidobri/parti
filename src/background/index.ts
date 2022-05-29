@@ -1,8 +1,15 @@
-import { runtime, Runtime } from 'webextension-polyfill';
-import type { PlaybackState } from '../interfaces';
-import { initSocket, reportState, setReportStateCallback } from './socket';
+import { runtime, Runtime, tabs } from 'webextension-polyfill';
+import type { PlaybackState, PortEvent } from '../interfaces';
+import {
+  emit,
+  initSocket,
+  reportState,
+  setReportStateCallback,
+} from './socket';
 
-const ports: Record<string, Runtime.Port> = {};
+let ports: Runtime.Port[] = [];
+const rooms: Record<string, Runtime.Port[]> = {};
+
 let playbackState: PlaybackState;
 
 initSocket();
@@ -26,12 +33,12 @@ function handleConnect(port: Runtime.Port) {
  */
 function handleStateReports(port: Runtime.Port, id: string) {
   console.info('✅ Player connected', id);
-  ports[id] = port;
+  ports.push(port);
 
   port.onMessage.addListener(reportState);
-  port.onMessage.addListener((state) => broadcastState(state, id));
+  port.onMessage.addListener(broadcastState);
   setReportStateCallback(port.postMessage);
-  port.onDisconnect.addListener((port) => handleDisconnect(port, id));
+  port.onDisconnect.addListener(handleDisconnect);
 
   if (playbackState) {
     port.postMessage(playbackState);
@@ -43,25 +50,54 @@ function handleStateReports(port: Runtime.Port, id: string) {
  * @param state Current state
  * @param id Port id
  */
-function broadcastState(state: PlaybackState, id: string) {
+function broadcastState(state: PlaybackState, port: Runtime.Port) {
   console.log(state);
+
   playbackState = state;
 
-  for (const portId in ports) {
-    if (portId === id) continue;
-    ports[portId].postMessage(state);
+  // for (let p of ports) {
+  //   if (p === port) continue;
+  //   p.postMessage(state);
+  // }
+
+  for (const room in rooms) {
+    if (!rooms[room].includes(port)) continue;
+    for (const p of rooms[room]) {
+      if (p === port) continue;
+      p.postMessage(state);
+    }
   }
 }
 
-function handleDisconnect(port: Runtime.Port, id: string) {
-  console.info('❌ Player disconnected', id);
-  delete ports[id];
+function handleDisconnect(port: Runtime.Port) {
+  console.info('❌ Player disconnected', port.name);
+  ports = ports.filter((p) => p !== port);
 }
 
-function handleMessage(data) {
-  if (data === 'reloadSettings') {
-    initSocket();
+async function handleMessage(event: PortEvent) {
+  console.debug(event);
+
+  const [tab] = await tabs.query({ active: true, currentWindow: true });
+  const port = ports.find((p) => p.sender.tab.id === tab.id);
+
+  switch (event.name) {
+    case 'reloadsettings':
+      initSocket();
+      break;
+
+    case 'joinroom':
+      if (!rooms[event.data.name]) {
+        rooms[event.data.name] = [];
+      }
+      rooms[event.data.name].push(port);
+      break;
+
+    case 'leaveroom':
+      rooms[event.data.name] = rooms[event.data.name].filter((p) => p !== port);
+      break;
   }
+
+  emit(event);
 }
 
 export {};

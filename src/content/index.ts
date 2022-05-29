@@ -1,13 +1,11 @@
 import type { PlaybackState } from '../interfaces';
-import browser from 'webextension-polyfill';
+import browser, { tabs } from 'webextension-polyfill';
 import VideoPlayer from './player';
 
 let port: browser.Runtime.Port;
 let portConnected = false;
 
 let player: VideoPlayer;
-
-const portId = Math.round(Math.random() * 100000);
 
 async function main() {
   player = await VideoPlayer.init();
@@ -17,8 +15,13 @@ async function main() {
   setInterval(connectPort, 1000);
 }
 
-function connectPort() {
+async function connectPort() {
   if (portConnected) return;
+
+  // const [tab] = await tabs.query({ active: true, currentWindow: true });
+
+  const portId = Math.random().toString(36).slice(2, 7);
+
   port = browser.runtime.connect({ name: `state:${portId}` });
   port.onMessage.addListener(handleMessage);
   port.onDisconnect.addListener(handleDisconnect);

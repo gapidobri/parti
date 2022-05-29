@@ -30,12 +30,14 @@ function handleConnect(port: Runtime.Port) {
  */
 function handleStateReports(port: Runtime.Port) {
   console.info('✅ Player connected');
+
   ports.push(port);
 
   port.onMessage.addListener(reportState);
   port.onMessage.addListener(broadcastState);
-  setReportStateCallback(port.postMessage);
   port.onDisconnect.addListener(handleDisconnect);
+
+  setReportStateCallback(port.postMessage);
 }
 
 /**

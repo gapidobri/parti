@@ -1,8 +1,6 @@
 import { runtime, Runtime } from 'webextension-polyfill';
-import type { State } from '../interfaces';
+import type { PlaybackState } from '../interfaces';
 import { initSocket, reportState, setReportStateCallback } from './socket';
-
-console.info('✅ Background script running');
 
 const ports: Record<string, Runtime.Port> = {};
 
@@ -26,22 +24,22 @@ function handleConnect(port: Runtime.Port) {
  * @param id Port id
  */
 function handleStateReports(port: Runtime.Port, id: string) {
-  console.info('✅ State reports port connected', id);
+  console.info('✅ Player connected', id);
   ports[id] = port;
 
   port.onMessage.addListener(reportState);
   port.onMessage.addListener((state) => broadcastState(state, id));
-
   setReportStateCallback(port.postMessage);
   port.onDisconnect.addListener((port) => handleDisconnect(port, id));
 }
 
 /**
- * Broadcasts state to all content script instances
+ * Broadcasts state to all player instances
  * @param state Current state
  * @param id Port id
  */
-function broadcastState(state: State, id: string) {
+function broadcastState(state: PlaybackState, id: string) {
+  console.debug(state);
   for (const portId in ports) {
     if (portId === id) continue;
     ports[portId].postMessage(state);
@@ -49,7 +47,7 @@ function broadcastState(state: State, id: string) {
 }
 
 function handleDisconnect(port: Runtime.Port, id: string) {
-  console.info('❌ State reports port disconnected', id);
+  console.info('❌ Player disconnected', id);
   delete ports[id];
 }
 

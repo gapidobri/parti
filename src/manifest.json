@@ -13,5 +13,11 @@
   "browser_action": {
     "default_popup": "popup/index.html"
   },
-  "permissions": ["webRequest", "storage", "<all_urls>"]
+  "permissions": ["webRequest", "storage", "<all_urls>"],
+  "icons": { "48": "assets/logo.png" },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "parti@gapi.me"
+    }
+  }
 }

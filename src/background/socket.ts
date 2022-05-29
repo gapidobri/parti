@@ -28,7 +28,6 @@ export async function initSocket() {
 
 function handleConnect() {
   console.info('✅ WebSocket connected', socket.id);
-  console.debug('Session id', socket.id);
 }
 
 function handleDisconnect() {
@@ -44,7 +43,6 @@ function handlePing(start: number) {
  * @param state Current state
  */
 export function reportState(state: State) {
-  console.debug('Report state', state);
   socket.emit('state', state);
 }
 

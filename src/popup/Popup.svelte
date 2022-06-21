@@ -18,14 +18,14 @@
   async function handleJoinRoom() {
     runtime.sendMessage({
       name: 'joinroom',
-      data: { name: room },
+      data: room,
     });
   }
 
   async function handleLeaveRoom() {
     runtime.sendMessage({
       name: 'leaveroom',
-      data: { name: room },
+      data: room,
     });
   }
 </script>

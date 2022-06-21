@@ -1,9 +1,9 @@
 import { io, Socket } from 'socket.io-client';
 import { storage } from 'webextension-polyfill';
-import type { PlaybackState, PortEvent } from '../interfaces';
+import type { ServerStateEvent } from '../interfaces';
 
 let socket: Socket;
-let handleState: (state: PlaybackState) => void = () => {};
+let reportStateCallbacks: ((event: ServerStateEvent) => void)[] = [];
 
 export async function initSocket() {
   if (socket && socket.connected) {
@@ -32,6 +32,10 @@ function handleDisconnect() {
   console.info('❌ WebSocket disconnected');
 }
 
+function handleState(event: ServerStateEvent) {
+  reportStateCallbacks.forEach((c) => c(event));
+}
+
 function handlePing(start: number) {
   socket.emit('ping', start);
 }
@@ -40,16 +44,22 @@ function handlePing(start: number) {
  * Reports state to server
  * @param state Current state
  */
-export function reportState(state: PlaybackState) {
-  socket.emit('state', state);
+export function reportState(event: ServerStateEvent) {
+  socket.emit('state', event);
 }
 
-export function emit(event: PortEvent) {
-  socket.emit(event.name, event.data);
+export function emit(event: string, data: any) {
+  socket.emit(event, data);
 }
 
 export function setReportStateCallback(
-  callback: (state: PlaybackState) => void,
+  callback: (event: ServerStateEvent) => void,
 ) {
-  handleState = callback;
+  reportStateCallbacks.push(callback);
+}
+
+export function removeReportStateCallback(
+  callback: (state: ServerStateEvent) => void,
+) {
+  reportStateCallbacks = reportStateCallbacks.filter((c) => c !== callback);
 }

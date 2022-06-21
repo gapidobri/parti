@@ -8,3 +8,8 @@ export interface PortEvent {
   name: string;
   data: any;
 }
+
+export interface ServerStateEvent {
+  room: string;
+  data: PlaybackState;
+}

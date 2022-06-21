@@ -1,10 +1,9 @@
 import type { PlaybackState } from '../interfaces';
-import browser, { tabs } from 'webextension-polyfill';
+import browser from 'webextension-polyfill';
 import VideoPlayer from './player';
 
 let port: browser.Runtime.Port;
 let portConnected = false;
-
 let player: VideoPlayer;
 
 async function main() {
@@ -15,7 +14,7 @@ async function main() {
   setInterval(connectPort, 1000);
 }
 
-async function connectPort() {
+function connectPort() {
   if (portConnected) return;
 
   port = browser.runtime.connect({ name: 'state' });
